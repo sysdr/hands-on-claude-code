@@ -1,0 +1,8 @@
+{
+  "demo_runs": 8,
+  "verify_pass": 7,
+  "verify_fail": 1,
+  "last_demo_at": "2026-04-03T09:54:43Z",
+  "demo_last_status": "ok",
+  "server_started_at": "2026-04-03T09:54:43Z"
+}

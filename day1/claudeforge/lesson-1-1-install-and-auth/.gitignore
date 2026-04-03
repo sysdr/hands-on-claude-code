@@ -1,0 +1,6 @@
+logs/
+.dashboard.pid
+.env
+*.pyc
+__pycache__/
+src/project-fingerprint.json
