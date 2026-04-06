@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lesson 1.2 — Metrics</title>
+  <style>
+    :root { --bg: #0f1419; --card: #1a2332; --accent: #3ecfb0; --text: #e8eef5; --muted: #8b9cb3; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Segoe UI", system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+    header { padding: 1.5rem 2rem; border-bottom: 1px solid #2a3544; }
+    h1 { margin: 0; font-size: 1.25rem; font-weight: 600; }
+    p.sub { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.9rem; }
+    main { padding: 1.5rem 2rem; display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .card { background: var(--card); border-radius: 10px; padding: 1rem 1.25rem; border: 1px solid #2a3544; }
+    .card h2 { margin: 0 0 0.5rem; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); font-weight: 600; }
+    .card .val { font-size: 1.75rem; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
+    .err { color: #f07178; font-size: 0.85rem; margin-top: 1rem; }
+    footer { padding: 1rem 2rem; color: var(--muted); font-size: 0.8rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>ClaudeForge — Lesson 1.2 metrics</h1>
+    <p class="sub">Updates every second. From the lesson directory run <code>./sample-repo/scripts/demo_metrics.sh</code> to bump demo counters.</p>
+  </header>
+  <main id="grid"></main>
+  <p id="err" class="err" style="display:none"></p>
+  <footer id="foot"></footer>
+  <script>
+    const keys = [
+      ["Uptime (s)", "uptime_seconds"],
+      ["Server epoch", "server_epoch_unix"],
+      ["HTTP requests", "http_requests_total"],
+      ["Demo registrations", "demo_registrations"],
+      ["Demo logins", "demo_logins"],
+      ["Active sessions (demo)", "active_sessions"],
+      ["Process ID", "pid"],
+    ];
+    function render(data) {
+      const grid = document.getElementById("grid");
+      grid.innerHTML = "";
+      for (const [label, k] of keys) {
+        const v = data[k];
+        const card = document.createElement("div");
+        card.className = "card";
+        card.innerHTML = "<h2>" + label + "</h2><div class=\"val\">" + (v !== undefined ? v : "—") + "</div>";
+        grid.appendChild(card);
+      }
+      document.getElementById("foot").textContent = "Last fetch: " + new Date().toISOString();
+    }
+    async function tick() {
+      try {
+        const r = await fetch("/api/metrics", { cache: "no-store" });
+        if (!r.ok) throw new Error("HTTP " + r.status);
+        const data = await r.json();
+        document.getElementById("err").style.display = "none";
+        render(data);
+      } catch (e) {
+        document.getElementById("err").style.display = "block";
+        document.getElementById("err").textContent = "Cannot reach metrics API. Start the server: ./start.sh — " + e;
+      }
+    }
+    tick();
+    setInterval(tick, 1000);
+  </script>
+</body>
+</html>
