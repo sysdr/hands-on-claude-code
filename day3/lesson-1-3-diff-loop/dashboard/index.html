@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sample API Dashboard</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+        margin: 24px;
+        color: #111;
+        background: #fafafa;
+      }
+
+      h1 {
+        margin: 0 0 16px;
+        font-size: 28px;
+        letter-spacing: -0.02em;
+      }
+
+      .page {
+        max-width: 1100px;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+        align-items: start;
+      }
+
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+
+      .card h2 {
+        margin: 0 0 12px;
+        font-size: 16px;
+        letter-spacing: -0.01em;
+      }
+
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .metric {
+        flex: 1;
+        min-width: 200px;
+        border: 1px solid #f3f4f6;
+        border-radius: 10px;
+        padding: 12px;
+        background: #fcfcfd;
+      }
+
+      .label {
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .value {
+        font-size: 28px;
+        font-weight: 700;
+        margin-top: 4px;
+        line-height: 1.1;
+      }
+
+      .muted {
+        color: #6b7280;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      button {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        padding: 10px 12px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+
+      button:hover:not(:disabled) {
+        background: #f9fafb;
+      }
+
+      button:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      button.primary {
+        border-color: #2563eb;
+        background: #2563eb;
+        color: #fff;
+      }
+
+      button.primary:hover:not(:disabled) {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+      }
+
+      button.danger {
+        border-color: #ef4444;
+        background: #ef4444;
+        color: #fff;
+      }
+
+      button.danger:hover:not(:disabled) {
+        background: #dc2626;
+        border-color: #dc2626;
+      }
+
+      button.ghost {
+        background: #fff;
+      }
+
+      code,
+      pre code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        font-size: 12px;
+      }
+
+      code {
+        background: #f3f4f6;
+        padding: 2px 6px;
+        border-radius: 6px;
+      }
+
+      pre.diff {
+        margin: 12px 0 0;
+        padding: 12px;
+        border-radius: 10px;
+        border: 1px solid #e5e7eb;
+        background: #0b1020;
+        color: #e5e7eb;
+        overflow: auto;
+        max-height: 320px;
+      }
+
+      pre.diff code {
+        background: transparent;
+        padding: 0;
+        color: inherit;
+        white-space: pre;
+        display: block;
+      }
+
+      .logs {
+        margin-top: 12px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: #fcfcfd;
+        max-height: 220px;
+        overflow: auto;
+        padding: 8px;
+      }
+
+      .log-line {
+        font-size: 12px;
+        padding: 6px 8px;
+        border-radius: 8px;
+        border: 1px solid transparent;
+      }
+
+      .log-line + .log-line {
+        margin-top: 6px;
+      }
+
+      .log-time {
+        color: #6b7280;
+        margin-right: 8px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .log-ok {
+        border-color: #bbf7d0;
+        background: #f0fdf4;
+      }
+
+      .log-info {
+        border-color: #e5e7eb;
+        background: #fff;
+      }
+
+      .log-warn {
+        border-color: #fde68a;
+        background: #fffbeb;
+      }
+
+      .log-err {
+        border-color: #fecaca;
+        background: #fef2f2;
+      }
+
+      .span-2 {
+        grid-column: 1 / -1;
+      }
+
+      @media (min-width: 980px) {
+        .span-2 {
+          grid-column: span 2;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <h1>Sample API Dashboard</h1>
+
+      <div class="grid">
+        <!-- Existing: API metrics + ping (preserved) -->
+        <section class="card" aria-label="API metrics">
+          <h2>API metrics</h2>
+          <div class="row">
+            <div class="metric">
+              <div class="label">requests_total (server)</div>
+              <div class="value" id="requestsTotal">…</div>
+              <div class="muted">
+                Updates every 1s from <code>/metrics</code>.
+                <span id="requestsSinceResetWrap" style="display: none">
+                  <br />
+                  Since reset: <strong id="requestsSinceReset">0</strong>
+                </span>
+              </div>
+            </div>
+            <div class="metric">
+              <div class="label">requests / second</div>
+              <div class="value" id="rpsValue">0.0</div>
+              <div class="muted">Estimated from recent <code>/metrics</code> polling + load tests.</div>
+            </div>
+          </div>
+          <div style="margin-top: 12px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap">
+            <button id="ping" type="button" class="primary">Ping health</button>
+            <span class="muted" id="status"></span>
+          </div>
+        </section>
+
+        <!-- New: Diff metrics -->
+        <section class="card" aria-label="Diff metrics">
+          <h2>Diff metrics</h2>
+          <div class="row">
+            <div class="metric">
+              <div class="label">Total generated</div>
+              <div class="value" id="diffTotal">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Accepted</div>
+              <div class="value" id="diffAccepted">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Rejected</div>
+              <div class="value" id="diffRejected">0</div>
+            </div>
+            <div class="metric">
+              <div class="label">Acceptance rate</div>
+              <div class="value" id="diffRate">0%</div>
+              <div class="muted">Accepted ÷ (Accepted + Rejected)</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- New: AI diff simulation -->
+        <section class="card" aria-label="AI code diff simulation">
+          <h2>AI Code Diff</h2>
+          <div class="row">
+            <button id="generateDiff" type="button" class="primary">Generate Diff</button>
+            <span class="muted" id="diffStatus">No diff yet.</span>
+          </div>
+          <div id="diffPanel" style="display: none">
+            <pre class="diff" aria-label="Mock diff"><code id="diffText"></code></pre>
+            <div class="row" style="margin-top: 12px">
+              <button id="acceptDiff" type="button" class="primary">Accept</button>
+              <button id="rejectDiff" type="button" class="ghost">Reject</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- New: Load + errors -->
+        <section class="card" aria-label="Simulators">
+          <h2>Simulators</h2>
+          <div class="row">
+            <button id="send50" type="button" class="primary">Send 50 Requests</button>
+            <button id="triggerError" type="button" class="danger">Trigger Error</button>
+          </div>
+          <div class="muted" id="loadStatus" style="margin-top: 10px">Idle.</div>
+          <div class="row" style="margin-top: 12px">
+            <div class="metric">
+              <div class="label">Errors (simulated)</div>
+              <div class="value" id="errorCount">0</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- New: Logs -->
+        <section class="card span-2" aria-label="Live logs">
+          <div class="row" style="justify-content: space-between">
+            <h2 style="margin: 0">Live logs</h2>
+            <button id="resetDashboard" type="button" class="ghost">Reset Dashboard</button>
+          </div>
+          <div class="muted" style="margin: 8px 0 0">Latest 10 events (newest at the top).</div>
+          <div class="logs" id="logs" aria-live="polite"></div>
+        </section>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        const requestsTotalEl = document.getElementById('requestsTotal');
+        const statusEl = document.getElementById('status');
+        const pingBtn = document.getElementById('ping');
+        const requestsSinceResetEl = document.getElementById('requestsSinceReset');
+        const requestsSinceResetWrap = document.getElementById('requestsSinceResetWrap');
+        const rpsValueEl = document.getElementById('rpsValue');
+
+        const diffTotalEl = document.getElementById('diffTotal');
+        const diffAcceptedEl = document.getElementById('diffAccepted');
+        const diffRejectedEl = document.getElementById('diffRejected');
+        const diffRateEl = document.getElementById('diffRate');
+
+        const generateDiffBtn = document.getElementById('generateDiff');
+        const diffStatusEl = document.getElementById('diffStatus');
+        const diffPanel = document.getElementById('diffPanel');
+        const diffTextEl = document.getElementById('diffText');
+        const acceptDiffBtn = document.getElementById('acceptDiff');
+        const rejectDiffBtn = document.getElementById('rejectDiff');
+
+        const send50Btn = document.getElementById('send50');
+        const triggerErrorBtn = document.getElementById('triggerError');
+        const loadStatusEl = document.getElementById('loadStatus');
+        const errorCountEl = document.getElementById('errorCount');
+
+        const logsEl = document.getElementById('logs');
+        const resetBtn = document.getElementById('resetDashboard');
+
+        if (
+          !requestsTotalEl ||
+          !statusEl ||
+          !pingBtn ||
+          !requestsSinceResetEl ||
+          !requestsSinceResetWrap ||
+          !rpsValueEl ||
+          !diffTotalEl ||
+          !diffAcceptedEl ||
+          !diffRejectedEl ||
+          !diffRateEl ||
+          !generateDiffBtn ||
+          !diffStatusEl ||
+          !diffPanel ||
+          !diffTextEl ||
+          !acceptDiffBtn ||
+          !rejectDiffBtn ||
+          !send50Btn ||
+          !triggerErrorBtn ||
+          !loadStatusEl ||
+          !errorCountEl ||
+          !logsEl ||
+          !resetBtn
+        ) {
+          return;
+        }
+
+        const MOCK_DIFF =
+          '--- a/server.py\n' +
+          '+++ b/server.py\n' +
+          '@@ -1,12 +1,18 @@\n' +
+          '-from flask import Flask, jsonify\n' +
+          '+from flask import Flask, jsonify\n' +
+          '+import logging\n' +
+          '+import asyncio\n' +
+          ' \n' +
+          ' app = Flask(__name__)\n' +
+          '+logger = logging.getLogger(__name__)\n' +
+          ' \n' +
+          '-def health_check():\n' +
+          '-    return {"status": "ok"}\n' +
+          '+async def health_check():\n' +
+          '+    logger.info("health_check invoked")\n' +
+          '+    await asyncio.sleep(0)\n' +
+          '+    return {"status": "ok"}\n' +
+          ' \n' +
+          ' @app.route("/health", methods=["GET"])\n' +
+          '-def health():\n' +
+          '-    return health_check(), 200\n' +
+          '+async def health():\n' +
+          '+    return await health_check(), 200\n';
+
+        let baselineServerRequests = null;
+        let lastServerRequests = null;
+        let lastMetricsAt = null;
+
+        let diffsGenerated = 0;
+        let diffsAccepted = 0;
+        let diffsRejected = 0;
+        let diffVisible = false;
+
+        let simulatedErrors = 0;
+
+        const logs = [];
+
+        function setStatus(msg) {
+          statusEl.textContent = msg;
+        }
+
+        function nowTime() {
+          return new Date().toLocaleTimeString();
+        }
+
+        function pushLog(message, level) {
+          const lvl = level || 'info';
+          logs.unshift({ t: Date.now(), msg: message, level: lvl });
+          if (logs.length > 10) {
+            logs.length = 10;
+          }
+          renderLogs();
+        }
+
+        function renderLogs() {
+          logsEl.innerHTML = '';
+          for (let i = 0; i < logs.length; i++) {
+            const item = logs[i];
+            const line = document.createElement('div');
+            line.className = 'log-line ' + logClass(item.level);
+            const time = document.createElement('span');
+            time.className = 'log-time';
+            time.textContent = new Date(item.t).toLocaleTimeString();
+            const text = document.createElement('span');
+            text.textContent = item.msg;
+            line.appendChild(time);
+            line.appendChild(text);
+            logsEl.appendChild(line);
+          }
+        }
+
+        function logClass(level) {
+          if (level === 'ok') return 'log-ok';
+          if (level === 'warn') return 'log-warn';
+          if (level === 'err') return 'log-err';
+          return 'log-info';
+        }
+
+        function updateDiffMetricsUI() {
+          diffTotalEl.textContent = String(diffsGenerated);
+          diffAcceptedEl.textContent = String(diffsAccepted);
+          diffRejectedEl.textContent = String(diffsRejected);
+
+          const denom = diffsAccepted + diffsRejected;
+          if (denom === 0) {
+            diffRateEl.textContent = '0%';
+          } else {
+            const pct = (100 * diffsAccepted) / denom;
+            diffRateEl.textContent = pct.toFixed(1) + '%';
+          }
+        }
+
+        function hideDiff() {
+          diffVisible = false;
+          diffPanel.style.display = 'none';
+          diffTextEl.textContent = '';
+          acceptDiffBtn.disabled = false;
+          rejectDiffBtn.disabled = false;
+          generateDiffBtn.disabled = false;
+        }
+
+        function showDiff() {
+          diffVisible = true;
+          diffPanel.style.display = 'block';
+          diffTextEl.textContent = MOCK_DIFF;
+        }
+
+        function setDiffActionsEnabled(enabled) {
+          acceptDiffBtn.disabled = !enabled;
+          rejectDiffBtn.disabled = !enabled;
+          generateDiffBtn.disabled = enabled;
+        }
+
+        function updateRequestsSinceReset() {
+          if (
+            baselineServerRequests === null ||
+            lastServerRequests === null ||
+            !isFinite(baselineServerRequests) ||
+            !isFinite(lastServerRequests)
+          ) {
+            requestsSinceResetWrap.style.display = 'none';
+            return;
+          }
+          const since = Math.max(0, lastServerRequests - baselineServerRequests);
+          requestsSinceResetEl.textContent = String(since);
+          requestsSinceResetWrap.style.display = 'inline';
+        }
+
+        function updateRps() {
+          if (lastServerRequests === null || lastMetricsAt === null) {
+            rpsValueEl.textContent = '0.0';
+            return;
+          }
+          const windowMs = 5000;
+          const cutoff = Date.now() - windowMs;
+          while (metricsSamples.length && metricsSamples[0].t < cutoff) {
+            metricsSamples.shift();
+          }
+          if (metricsSamples.length < 2) {
+            rpsValueEl.textContent = '0.0';
+            return;
+          }
+          const first = metricsSamples[0];
+          const last = metricsSamples[metricsSamples.length - 1];
+          const dt = (last.t - first.t) / 1000;
+          const dv = last.v - first.v;
+          if (dt <= 0) {
+            rpsValueEl.textContent = '0.0';
+            return;
+          }
+          const rps = dv / dt;
+          rpsValueEl.textContent = rps.toFixed(1);
+        }
+
+        const metricsSamples = [];
+
+        async function refresh() {
+          try {
+            const r = await fetch('/metrics', { cache: 'no-store' });
+            const data = await r.json();
+            const v =
+              data && data.requests_total !== undefined ? Number(data.requests_total) : NaN;
+
+            if (!isNaN(v)) {
+              const prev = lastServerRequests;
+              lastServerRequests = v;
+              lastMetricsAt = Date.now();
+              metricsSamples.push({ t: lastMetricsAt, v: v });
+              if (prev !== null && v !== prev) {
+                pushLog('Metrics updated (requests_total: ' + prev + ' → ' + v + ')', 'ok');
+              }
+            }
+
+            requestsTotalEl.textContent = String(isNaN(v) ? 'N/A' : v);
+            updateRequestsSinceReset();
+            updateRps();
+            setStatus('Last update: ' + nowTime());
+          } catch (e) {
+            setStatus('Error: ' + String(e));
+          }
+        }
+
+        pingBtn.addEventListener('click', async function () {
+          pingBtn.disabled = true;
+          try {
+            setStatus('Pinging /health…');
+            pushLog('Health endpoint called (manual ping)', 'ok');
+            const r = await fetch('/health', { cache: 'no-store' });
+            if (!r.ok) {
+              throw new Error('Health request failed: HTTP ' + r.status);
+            }
+            await refresh();
+          } catch (e) {
+            setStatus('Error: ' + String(e));
+            pushLog('Health ping failed: ' + String(e), 'err');
+          } finally {
+            pingBtn.disabled = false;
+          }
+        });
+
+        generateDiffBtn.addEventListener('click', function () {
+          if (diffVisible) {
+            diffStatusEl.textContent = 'A diff is already open—accept or reject first.';
+            return;
+          }
+          diffsGenerated += 1;
+          updateDiffMetricsUI();
+          diffStatusEl.textContent = 'Diff generated (mock). Review below.';
+          pushLog('Diff generated', 'info');
+          showDiff();
+          setDiffActionsEnabled(true);
+        });
+
+        acceptDiffBtn.addEventListener('click', function () {
+          if (!diffVisible) return;
+          diffsAccepted += 1;
+          updateDiffMetricsUI();
+          pushLog('Diff accepted', 'ok');
+          diffStatusEl.textContent = 'Diff accepted. Hidden.';
+          hideDiff();
+        });
+
+        rejectDiffBtn.addEventListener('click', function () {
+          if (!diffVisible) return;
+          diffsRejected += 1;
+          updateDiffMetricsUI();
+          pushLog('Diff rejected', 'warn');
+          diffStatusEl.textContent = 'Diff rejected. Hidden.';
+          hideDiff();
+        });
+
+        function sleep(ms) {
+          return new Promise(function (resolve) {
+            setTimeout(resolve, ms);
+          });
+        }
+
+        send50Btn.addEventListener('click', async function () {
+          send50Btn.disabled = true;
+          triggerErrorBtn.disabled = true;
+          try {
+            loadStatusEl.textContent = 'Sending 50 requests to /health…';
+            for (let i = 1; i <= 50; i++) {
+              const r = await fetch('/health', { cache: 'no-store' });
+              if (!r.ok) {
+                throw new Error('HTTP ' + r.status);
+              }
+              if (i === 1 || i === 50 || i % 10 === 0) {
+                pushLog('Health endpoint called (load test ' + i + '/50)', 'ok');
+              }
+              loadStatusEl.textContent = 'Progress: ' + i + '/50';
+              await sleep(40);
+            }
+            await refresh();
+            loadStatusEl.textContent = 'Done: sent 50 requests.';
+            pushLog('API load test completed (50× /health)', 'ok');
+          } catch (e) {
+            loadStatusEl.textContent = 'Load test failed: ' + String(e);
+            pushLog('Load test failed: ' + String(e), 'err');
+          } finally {
+            send50Btn.disabled = false;
+            triggerErrorBtn.disabled = false;
+          }
+        });
+
+        triggerErrorBtn.addEventListener('click', function () {
+          simulatedErrors += 1;
+          errorCountEl.textContent = String(simulatedErrors);
+          pushLog('Error triggered (simulated)', 'err');
+        });
+
+        resetBtn.addEventListener('click', async function () {
+          resetBtn.disabled = true;
+          try {
+            baselineServerRequests = null;
+            lastServerRequests = null;
+            lastMetricsAt = null;
+            metricsSamples.length = 0;
+
+            diffsGenerated = 0;
+            diffsAccepted = 0;
+            diffsRejected = 0;
+            simulatedErrors = 0;
+            errorCountEl.textContent = '0';
+
+            hideDiff();
+            diffStatusEl.textContent = 'No diff yet.';
+            loadStatusEl.textContent = 'Idle.';
+
+            logs.length = 0;
+            renderLogs();
+
+            await refresh();
+            const parsed = Number(requestsTotalEl.textContent);
+            baselineServerRequests = isFinite(parsed) ? parsed : null;
+            updateRequestsSinceReset();
+            updateDiffMetricsUI();
+            updateRps();
+
+            pushLog('Dashboard reset (local counters + logs; server totals unchanged)', 'info');
+          } finally {
+            resetBtn.disabled = false;
+          }
+        });
+
+        updateDiffMetricsUI();
+        hideDiff();
+        pushLog('Dashboard ready', 'info');
+
+        refresh();
+        setInterval(refresh, 1000);
+      })();
+    </script>
+  </body>
+</html>
